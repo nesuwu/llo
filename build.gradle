@@ -19,6 +19,8 @@ group = mod_group_id
 
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
+    mavenCentral()
+    maven { url 'https://maven.shedaniel.me/' }
 }
 
 base {
@@ -133,6 +135,14 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+    // Primitive collections for reduced GC and faster iteration in hot paths
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+
+    // Cloth Config API (NeoForge) for in-game configuration UI
+    implementation 'me.shedaniel.cloth:cloth-config-neoforge:14.0.126'
+    // Ensure Cloth Config loads in dev runtime
+    localRuntime 'me.shedaniel.cloth:cloth-config-neoforge:14.0.126'
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

@@ -12,11 +12,41 @@ This is an unofficial NeoForge port of Dark-lion-jp's Light Level 2025 mod, avai
     * **Yellow (1-7):** A warning color, indicating the block needs more light to be completely safe from spawning mobs.
     * **Red (0):** The block is dark enough for hostile mobs to spawn.
 * **Toggleable:** The overlay can be toggled on or off at any time using the default keybind `F9`. You can change this keybind in your Minecraft controls settings.
-* **(Somewhat) Optimized:** The mod only renders light levels on blocks with a solid top face that are exposed to an air block above them. This prevents rendering the overlay inside cave walls or under ceilings, improving performance and clarity (the mod really lagged without this 💀💀).
+* **Optimized:** Renders light levels only on valid top surfaces exposed to air to reduce noise and improve performance.
+
+## Controls
+
+- Toggle overlay: `F9`
+- Open config: `F10` (or open from the Mods list via the Config button)
+
+## Configuration
+
+You can configure the mod in-game (preferred) or via JSON.
+
+In-game config categories:
+- General
+  - Horizontal Range (1–128)
+  - Vertical Range (1–64)
+  - Update Interval (ms) (16–2000)
+- Visuals
+  - Color: Light Level 0 (red)
+  - Color: Light Level 1–7 (yellow)
+  - Color: Safe (>=8) (green)
+  - Show Only Spawnable (show only 0–7)
+  - Text Scale (0.015–0.06)
+
+Config file path (created/updated automatically):
+- Windows: `%APPDATA%\\.minecraft\\config\\lightleveloverlay-client.json`
+- macOS: `~/Library/Application Support/minecraft/config/lightleveloverlay-client.json`
+- Linux: `~/.minecraft/config/lightleveloverlay-client.json`
+
+Notes:
+- Color pickers store RGB only; the overlay always renders fully opaque.
+- For compatibility with older versions, `showOnlySpawnable` is kept in sync with the legacy `showOnlyUnsafe` flag.
 
 ## Installation
 
-This mod is for NeoForge and has no additional dependencies other than the NeoForge loader itself.
+This mod targets NeoForge and depends on Cloth Config (bundled for dev/runtime in this project).
 
 1.  Make sure you have a NeoForge installation.
 2.  Place the mod's `.jar` file into your Minecraft `mods` folder.
