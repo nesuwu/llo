@@ -1,4 +1,5 @@
 {
   "key.lightleveloverlay.toggle": "Przełącz Mapę Oświetlenia",
-  "key.categories.lightleveloverlay": "Mapa Oświetlenia"
+  "key.categories.lightleveloverlay": "Mapa Oświetlenia",
+  "key.lightleveloverlay.open_config": "Otwórz Menu Konfiguracji"
 }

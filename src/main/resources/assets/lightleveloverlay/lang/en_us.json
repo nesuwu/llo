@@ -1,4 +1,5 @@
 {
   "key.lightleveloverlay.toggle": "Toggle Light Level Overlay",
-  "key.categories.lightleveloverlay": "Light Level Overlay"
+  "key.categories.lightleveloverlay": "Light Level Overlay",
+  "key.lightleveloverlay.open_config": "Open Configuration"
 }

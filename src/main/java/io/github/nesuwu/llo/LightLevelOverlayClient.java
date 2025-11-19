@@ -10,10 +10,12 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -33,21 +35,21 @@ public class LightLevelOverlayClient {
     private static long UPDATE_INTERVAL_MS = 150;
 
     private static final KeyMapping toggleOverlayKey = new KeyMapping(
-            "key.lightleveloverlay.toggle",
-            KeyConflictContext.IN_GAME,
-            KeyModifier.NONE,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_F9,
-            "key.categories.lightleveloverlay"
+        "key.lightleveloverlay.toggle",
+        KeyConflictContext.IN_GAME,
+        KeyModifier.NONE,
+        InputConstants.Type.KEYSYM,
+        GLFW.GLFW_KEY_F9,
+        "key.categories.lightleveloverlay"
     );
 
     private static final KeyMapping openConfigKey = new KeyMapping(
-            "key.lightleveloverlay.open_config",
-            KeyConflictContext.IN_GAME,
-            KeyModifier.NONE,
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_F10,
-            "key.categories.lightleveloverlay"
+        "key.lightleveloverlay.open_config",
+        KeyConflictContext.IN_GAME,
+        KeyModifier.NONE,
+        InputConstants.Type.KEYSYM,
+        GLFW.GLFW_KEY_F10,
+        "key.categories.lightleveloverlay"
     );
 
     public static KeyMapping getToggleOverlayKey() {
@@ -96,18 +98,32 @@ public class LightLevelOverlayClient {
         }
 
         PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-        Vec3 cameraPos = mc.gameRenderer.getMainCamera().getPosition();
+        MultiBufferSource.BufferSource buffer = mc
+            .renderBuffers()
+            .bufferSource();
+        Camera mainCamera = mc.gameRenderer.getMainCamera();
+        Vec3 cameraPos = mainCamera.getPosition();
+        Frustum frustum = event.getFrustum();
 
         poseStack.pushPose();
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
         boolean showOnlySpawnable = ClientConfigFile.isShowOnlySpawnable();
 
+        double maxDistSqr = 64.0 * 64.0;
+
         for (Long2IntMap.Entry entry : lightLevelCache.long2IntEntrySet()) {
             long packedPos = entry.getLongKey();
             int lightLevel = entry.getIntValue();
             BlockPos pos = BlockPos.of(packedPos);
+
+            if (pos.distToCenterSqr(cameraPos) > maxDistSqr) {
+                continue;
+            }
+
+            if (frustum != null && !frustum.isVisible(new AABB(pos))) {
+                continue;
+            }
 
             if (showOnlySpawnable && lightLevel >= 8) {
                 continue;
@@ -139,8 +155,14 @@ public class LightLevelOverlayClient {
         int minZ = playerPos.getZ() - RANGE_HORIZONTAL;
         int maxZ = playerPos.getZ() + RANGE_HORIZONTAL;
 
-        int topY = Math.min(mc.level.getMaxBuildHeight() - 1, playerPos.getY() + RANGE_VERTICAL);
-        int bottomY = Math.max(mc.level.getMinBuildHeight(), playerPos.getY() - RANGE_VERTICAL);
+        int topY = Math.min(
+            mc.level.getMaxBuildHeight() - 1,
+            playerPos.getY() + RANGE_VERTICAL
+        );
+        int bottomY = Math.max(
+            mc.level.getMinBuildHeight(),
+            playerPos.getY() - RANGE_VERTICAL
+        );
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
@@ -148,36 +170,56 @@ public class LightLevelOverlayClient {
                     BlockPos pos = new BlockPos(x, y, z);
                     BlockPos posAbove = pos.above();
 
-                    if (!mc.level.hasChunkAt(pos) || !mc.level.hasChunkAt(posAbove)) {
+                    if (
+                        !mc.level.hasChunkAt(pos) ||
+                        !mc.level.hasChunkAt(posAbove)
+                    ) {
                         continue;
                     }
 
                     BlockState bottomState = mc.level.getBlockState(pos);
-                    boolean isSurfaceSolid = bottomState.isFaceSturdy(mc.level, pos, Direction.UP);
+                    boolean isSurfaceSolid = bottomState.isFaceSturdy(
+                        mc.level,
+                        pos,
+                        Direction.UP
+                    );
 
                     if (!isSurfaceSolid) {
                         continue;
                     }
 
-                    if (!mc.level.isEmptyBlock(posAbove)) {
+                    BlockState upState = mc.level.getBlockState(posAbove);
+                    if (upState.isCollisionShapeFullBlock(mc.level, posAbove)) {
                         continue;
                     }
 
-                    int lightLevel = mc.level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(posAbove);
+                    int lightLevel = mc.level
+                        .getLightEngine()
+                        .getLayerListener(LightLayer.BLOCK)
+                        .getLightValue(posAbove);
                     lightLevelCache.put(BlockPos.asLong(x, y, z), lightLevel);
-                    break;
                 }
             }
         }
     }
 
-    private void drawTextOnBlock(PoseStack poseStack, MultiBufferSource buffer, String text, BlockPos pos, int color) {
+    private void drawTextOnBlock(
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        String text,
+        BlockPos pos,
+        int color
+    ) {
         Minecraft mc = Minecraft.getInstance();
         Camera camera = mc.gameRenderer.getMainCamera();
 
         poseStack.pushPose();
 
-        poseStack.translate(pos.getX() + 0.5, pos.getY() + 1.5, pos.getZ() + 0.5);
+        poseStack.translate(
+            pos.getX() + 0.5,
+            pos.getY() + 1.5,
+            pos.getZ() + 0.5
+        );
 
         poseStack.mulPose(Axis.YP.rotationDegrees(-camera.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
@@ -190,7 +232,18 @@ public class LightLevelOverlayClient {
 
         int finalColor = 0xFF000000 | color;
 
-        mc.font.drawInBatch(text, textWidth, 0F, finalColor, false, matrix4f, buffer, Font.DisplayMode.SEE_THROUGH, 0, 0xF000F0);
+        mc.font.drawInBatch(
+            text,
+            textWidth,
+            0F,
+            finalColor,
+            false,
+            matrix4f,
+            buffer,
+            Font.DisplayMode.NORMAL,
+            0,
+            0xF000F0
+        );
 
         poseStack.popPose();
     }
