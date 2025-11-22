@@ -155,14 +155,12 @@ public class LightLevelOverlayClient {
         int minZ = playerPos.getZ() - RANGE_HORIZONTAL;
         int maxZ = playerPos.getZ() + RANGE_HORIZONTAL;
 
-        int topY = Math.min(
-            mc.level.getMaxBuildHeight() - 1,
-            playerPos.getY() + RANGE_VERTICAL
-        );
-        int bottomY = Math.max(
-            mc.level.getMinBuildHeight(),
-            playerPos.getY() - RANGE_VERTICAL
-        );
+        // Use dimensionType() to get heights, ensuring compatibility with 1.21.3 mappings
+        int worldMinY = mc.level.dimensionType().minY();
+        int worldMaxY = worldMinY + mc.level.dimensionType().height();
+
+        int topY = Math.min(worldMaxY - 1, playerPos.getY() + RANGE_VERTICAL);
+        int bottomY = Math.max(worldMinY, playerPos.getY() - RANGE_VERTICAL);
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
