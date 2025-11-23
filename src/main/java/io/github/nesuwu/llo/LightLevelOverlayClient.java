@@ -19,6 +19,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterParticles;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.client.settings.KeyModifier;
 import org.joml.Matrix4f;
@@ -60,12 +61,9 @@ public class LightLevelOverlayClient {
         return openConfigKey;
     }
 
+    // [FIX] Subscribe to the specific subclass 'AfterParticles'
     @SubscribeEvent
-    public void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
-            return;
-        }
-
+    public void onRenderLevel(RenderLevelStageEvent.AfterParticles event) {
         while (toggleOverlayKey.consumeClick()) {
             overlayEnabled = !overlayEnabled;
             if (!overlayEnabled) {
@@ -155,7 +153,6 @@ public class LightLevelOverlayClient {
         int minZ = playerPos.getZ() - RANGE_HORIZONTAL;
         int maxZ = playerPos.getZ() + RANGE_HORIZONTAL;
 
-        // Use dimensionType() to get heights, ensuring compatibility with 1.21.3 mappings
         int worldMinY = mc.level.dimensionType().minY();
         int worldMaxY = worldMinY + mc.level.dimensionType().height();
 

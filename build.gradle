@@ -9,6 +9,7 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+// Include minecraft_version in the version string for the output filename
 version = "${project.minecraft_version}-${project.mod_version}"
 group = mod_group_id
 
@@ -16,7 +17,7 @@ repositories {
     mavenCentral()
     maven { url 'https://maven.shedaniel.me/' }
     maven { url 'https://maven.terraformersmc.com/' }
-    // REQUIRED: Parchment mappings repository
+    // Parchment repository can stay, it won't error unless we try to use an invalid artifact
     maven { url 'https://maven.parchmentmc.org' }
 }
 
@@ -24,17 +25,22 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 21 to end users in 1.21.1+, so mods should target Java 21.
+// Mojang ships Java 21 to end users in 1.21+, so mods should target Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
+    // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+    // [FIX] Parchment block commented out.
+    // Reason: Mappings for 1.21.6 do not exist yet (as of late 2025).
+    // We fallback to official Mojang mappings by disabling this block.
+    // parchment {
+    //     mappingsVersion = project.parchment_mappings_version
+    //     minecraftVersion = project.parchment_minecraft_version
+    // }
 
+    // Default run configurations.
     runs {
         client {
             client()
@@ -79,9 +85,9 @@ configurations {
 dependencies {
     implementation 'it.unimi.dsi:fastutil:8.5.12'
 
-    // Cloth Config API (NeoForge) for 1.21.5
-    implementation 'me.shedaniel.cloth:cloth-config-neoforge:18.0.145'
-    localRuntime 'me.shedaniel.cloth:cloth-config-neoforge:18.0.145'
+    // Cloth Config API (NeoForge)
+    implementation 'me.shedaniel.cloth:cloth-config-neoforge:19.0.146'
+    localRuntime 'me.shedaniel.cloth:cloth-config-neoforge:19.0.146'
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
