@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -35,13 +36,22 @@ public class LightLevelOverlayClient {
     private static int RANGE_VERTICAL = 8;
     private static long UPDATE_INTERVAL_MS = 150;
 
+    // [FIX] Category is now an object, not a String.
+    private static final KeyMapping.Category KEY_CATEGORY =
+        new KeyMapping.Category(
+            ResourceLocation.fromNamespaceAndPath(
+                "lightleveloverlay",
+                "general"
+            )
+        );
+
     private static final KeyMapping toggleOverlayKey = new KeyMapping(
         "key.lightleveloverlay.toggle",
         KeyConflictContext.IN_GAME,
         KeyModifier.NONE,
         InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_F9,
-        "key.categories.lightleveloverlay"
+        KEY_CATEGORY // [FIX] Passed Category object
     );
 
     private static final KeyMapping openConfigKey = new KeyMapping(
@@ -50,7 +60,7 @@ public class LightLevelOverlayClient {
         KeyModifier.NONE,
         InputConstants.Type.KEYSYM,
         GLFW.GLFW_KEY_F10,
-        "key.categories.lightleveloverlay"
+        KEY_CATEGORY // [FIX] Passed Category object
     );
 
     public static KeyMapping getToggleOverlayKey() {
@@ -59,6 +69,10 @@ public class LightLevelOverlayClient {
 
     public static KeyMapping getOpenConfigKey() {
         return openConfigKey;
+    }
+
+    public static KeyMapping.Category getCategory() {
+        return KEY_CATEGORY;
     }
 
     // [FIX] Subscribe to the specific subclass 'AfterParticles'
@@ -101,7 +115,8 @@ public class LightLevelOverlayClient {
             .bufferSource();
         Camera mainCamera = mc.gameRenderer.getMainCamera();
         Vec3 cameraPos = mainCamera.getPosition();
-        Frustum frustum = event.getFrustum();
+        // [FIX] getFrustum() removed in 1.21.9 render state update.
+        // Frustum frustum = event.getFrustum();
 
         poseStack.pushPose();
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
@@ -119,9 +134,12 @@ public class LightLevelOverlayClient {
                 continue;
             }
 
+            // [FIX] Disabled culling check temporarily due to missing API.
+            /*
             if (frustum != null && !frustum.isVisible(new AABB(pos))) {
                 continue;
             }
+            */
 
             if (showOnlySpawnable && lightLevel >= 8) {
                 continue;

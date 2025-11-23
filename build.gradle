@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.105'
+    id 'net.neoforged.moddev' version '2.0.111'
     id 'idea'
 }
 
@@ -17,7 +17,6 @@ repositories {
     mavenCentral()
     maven { url 'https://maven.shedaniel.me/' }
     maven { url 'https://maven.terraformersmc.com/' }
-    // Parchment repository can stay, it won't error unless we try to use an invalid artifact
     maven { url 'https://maven.parchmentmc.org' }
 }
 
@@ -32,13 +31,10 @@ neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
 
-    // [FIX] Parchment block commented out.
-    // Reason: Mappings for 1.21.6 do not exist yet (as of late 2025).
-    // We fallback to official Mojang mappings by disabling this block.
-    // parchment {
-    //     mappingsVersion = project.parchment_mappings_version
-    //     minecraftVersion = project.parchment_minecraft_version
-    // }
+    parchment {
+         mappingsVersion = project.parchment_mappings_version
+         minecraftVersion = project.parchment_minecraft_version
+    }
 
     // Default run configurations.
     runs {
@@ -86,8 +82,8 @@ dependencies {
     implementation 'it.unimi.dsi:fastutil:8.5.12'
 
     // Cloth Config API (NeoForge)
-    implementation 'me.shedaniel.cloth:cloth-config-neoforge:19.0.146'
-    localRuntime 'me.shedaniel.cloth:cloth-config-neoforge:19.0.146'
+    implementation 'me.shedaniel.cloth:cloth-config-neoforge:20.0.149'
+    localRuntime 'me.shedaniel.cloth:cloth-config-neoforge:20.0.149'
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
