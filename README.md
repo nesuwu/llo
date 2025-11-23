@@ -1,61 +1,42 @@
-# LLO - Light Level Overlay
+# LightLevelOverlay
 
-A simple NeoForge mod that helps you optimize your lighting by displaying block light levels on surfaces. The mod provides a simple, color-coded overlay that makes it easy to manage mob spawning and ensure your builds are safe.
+This mod does exactly what it says in the name. It’s a simple tool, so don’t expect a bunch of extra bells and whistles!
 
-This is an unofficial NeoForge port of Dark-lion-jp's Light Level 2025 mod, available [here](https://github.com/dark-lion-jp/light-level-2025).
+## Disclaimer
+Just a quick heads-up: **I wrote this whole thing from scratch as a standalone project.** It isn’t a port of any other mod, official or otherwise.  
+I’m not affiliated with dark-lion-jp in any way, but I was definitely inspired by their Light Level mod! So, please don’t bother them with any issues you find here—come to me instead.
 
 ## Features
 
-* **Light Level Overlay:** Displays the block light level on top of solid blocks within a 16-block radius of the player.
-* **Color-Coded Indicators:** The mod uses a color system to quickly show the spawning status of a block:
-    * **Green (8+):** The block is safe; mobs cannot spawn here.
-    * **Yellow (1-7):** A warning color, indicating the block needs more light to be completely safe from spawning mobs.
-    * **Red (0):** The block is dark enough for hostile mobs to spawn.
-* **Toggleable:** The overlay can be toggled on or off at any time using the default keybind `F9`. You can change this keybind in your Minecraft controls settings.
-* **Optimized:** Renders light levels only on valid top surfaces exposed to air to reduce noise and improve performance.
+- **Simple Overlay:** It shows you the light level numbers right on top of blocks. This helps you stop mobs from spawning where you don’t want them.
+- **Color Coded:**
+  - **Green:** You’re safe! (Light level 8+)
+  - **Yellow:** Be careful, it’s a bit risky. (Light level 1–7)
+  - **Red:** Watch out, it’s dangerous! (Light level 0)
+- **Performance:** I made sure it uses caching so it doesn’t slow down your game.
+- **Configurable:** Feel free to change the ranges, colors, and how often it updates to fit your needs.
 
-## Controls
+## Usage
 
-- Toggle overlay: `F9`
-- Open config: `F10` (or open from the Mods list via the Config button)
-
-## Configuration
-
-You can configure the mod in-game (preferred) or via JSON.
-
-In-game config categories:
-- General
-  - Horizontal Range (1–128)
-  - Vertical Range (1–64)
-  - Update Interval (ms) (16–2000)
-- Visuals
-  - Color: Light Level 0 (red)
-  - Color: Light Level 1–7 (yellow)
-  - Color: Safe (>=8) (green)
-  - Show Only Spawnable (show only 0–7)
-  - Text Scale (0.015–0.06)
-
-Config file path (created/updated automatically):
-- Windows: `%APPDATA%\\.minecraft\\config\\lightleveloverlay-client.json`
-- macOS: `~/Library/Application Support/minecraft/config/lightleveloverlay-client.json`
-- Linux: `~/.minecraft/config/lightleveloverlay-client.json`
-
-Notes:
-- Color pickers store RGB only; the overlay always renders fully opaque.
-- For compatibility with older versions, `showOnlySpawnable` is kept in sync with the legacy `showOnlyUnsafe` flag.
+- **Toggle Overlay:** Just press `F9`
+- **Open Config:** Just press `F10`
 
 ## Installation
 
-This mod targets NeoForge and depends on Cloth Config (bundled for dev/runtime in this project).
+1. First, make sure you have **NeoForge** installed.
+2. Download the latest version of **LightLevelOverlay**.
+3. Pop the `.jar` file into your `mods` folder.
+4. Start up the game and you’re good to go!
 
-1.  Make sure you have a NeoForge installation.
-2.  Place the mod's `.jar` file into your Minecraft `mods` folder.
-3.  Launch the game to start using the mod.
+## Configuration
+You can change the settings while you're playing by pressing `F10`, or you can edit the file at  
+`config/lightleveloverlay-client.json` if you prefer.
 
-If you encounter any issues with missing libraries, you can run `gradlew --refresh-dependencies` to refresh your local cache.
+- **Horizontal Range:** How far around you the mod checks for light levels.
+- **Vertical Range:** How high up or down it checks.
+- **Update Interval:** How often it re-checks the light levels. Lower numbers mean it’s smoother, but it might use a bit more computer power.
+- **Show Only Spawnable:** Turn this on to hide the safe blocks and only see where mobs might spawn.
 
-## Authors and License
+## License
 
-* **Light Level 2025:** dark-lion-jp
-* **Author:** Nesuwu (me)
-* **License:** MIT License
+This project is licensed under the **MIT License**.
