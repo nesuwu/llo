@@ -75,7 +75,6 @@ public final class ClientConfigFile {
     public static void load() {
         File dir = FMLPaths.CONFIGDIR.get().toFile();
         if (!dir.exists()) {
-            //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
         }
         File file = new File(dir, CONFIG_FILE);
@@ -88,7 +87,6 @@ public final class ClientConfigFile {
                     data = read;
                 }
             } catch (IOException | JsonSyntaxException ex) {
-                // Fallback to defaults on error
                 LOGGER.warn(
                     "Failed to read config file {}, falling back to defaults: {}",
                     file.getAbsolutePath(),
@@ -99,7 +97,6 @@ public final class ClientConfigFile {
         } else {
             save();
         }
-        // One-time migration: prefer new field and clear legacy flag if needed
         if (data.showOnlyUnsafe && !data.showOnlySpawnable) {
             data.showOnlySpawnable = true;
             data.showOnlyUnsafe = false;
@@ -115,7 +112,6 @@ public final class ClientConfigFile {
     public static void save() {
         File dir = FMLPaths.CONFIGDIR.get().toFile();
         if (!dir.exists()) {
-            //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
         }
         File file = new File(dir, CONFIG_FILE);
@@ -130,7 +126,6 @@ public final class ClientConfigFile {
         }
     }
 
-    // Getters with clamping (store RGB only; alpha is added at render time)
     public static int getColorZero() {
         ensureLoaded();
         return clampRgb(data.colorZero);
@@ -160,7 +155,6 @@ public final class ClientConfigFile {
         return rgb & 0x00FFFFFF;
     }
 
-    // Field updaters used by Cloth Config
     public static void setRangeHorizontal(int v) {
         ensureLoaded();
         data.rangeHorizontal = Math.max(1, Math.min(64, v));
@@ -212,7 +206,6 @@ public final class ClientConfigFile {
     public static void setShowOnlySpawnable(boolean v) {
         ensureLoaded();
         data.showOnlySpawnable = v;
-        // Keep legacy field in sync so older versions respect the change
         data.showOnlyUnsafe = v;
         LOGGER.info(
             "Config updated: showOnlySpawnable={} (legacy showOnlyUnsafe={})",

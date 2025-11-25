@@ -1,42 +1,42 @@
 # LightLevelOverlay
 
-This mod does exactly what it says in the name. It’s a simple tool, so don’t expect a bunch of extra bells and whistles!
-
-## Disclaimer
-Just a quick heads-up: **I wrote this whole thing from scratch as a standalone project.** It isn’t a port of any other mod, official or otherwise.  
-I’m not affiliated with dark-lion-jp in any way, but I was definitely inspired by their Light Level mod! So, please don’t bother them with any issues you find here—come to me instead.
+Shows light levels on blocks. That's it. That's the mod.
 
 ## Features
 
-- **Simple Overlay:** It shows you the light level numbers right on top of blocks. This helps you stop mobs from spawning where you don’t want them.
-- **Color Coded:**
-  - **Green:** You’re safe! (Light level 8+)
-  - **Yellow:** Be careful, it’s a bit risky. (Light level 1–7)
-  - **Red:** Watch out, it’s dangerous! (Light level 0)
-- **Performance:** I made sure it uses caching so it doesn’t slow down your game.
-- **Configurable:** Feel free to change the ranges, colors, and how often it updates to fit your needs.
+- **Numbers on blocks** - See exactly where mobs can spawn
+- **Color coded** - Red (0), Yellow (1-7), Green (8+)
+- **Renders above foliage** - No more squinting through grass
+- **Hides behind walls** - Only shows what you can actually see
+- **Fast** - Cached and optimized, won't tank your FPS
 
-## Usage
+## Controls
 
-- **Toggle Overlay:** Just press `F9`
-- **Open Config:** Just press `F10`
+| Key | Action |
+|-----|--------|
+| `F9` | Toggle overlay |
+| `F10` | Open config |
+
+## Config
+
+Press `F10` or edit `config/lightleveloverlay-client.json`
+
+- **Range** - How far to scan (horizontal/vertical)
+- **Update Interval** - Cache refresh rate in ms
+- **Colors** - Customize the RGB values
+- **Show Only Spawnable** - Hide safe blocks, show only danger zones
+- **Text Scale** - Make numbers bigger or smaller
 
 ## Installation
 
-1. First, make sure you have **NeoForge** installed.
-2. Download the latest version of **LightLevelOverlay**.
-3. Pop the `.jar` file into your `mods` folder.
-4. Start up the game and you’re good to go!
+1. Install [NeoForge](https://neoforged.net/)
+2. Drop the jar in your `mods` folder
+3. Done
 
-## Configuration
-You can change the settings while you're playing by pressing `F10`, or you can edit the file at  
-`config/lightleveloverlay-client.json` if you prefer.
+## Credits
 
-- **Horizontal Range:** How far around you the mod checks for light levels.
-- **Vertical Range:** How high up or down it checks.
-- **Update Interval:** How often it re-checks the light levels. Lower numbers mean it’s smoother, but it might use a bit more computer power.
-- **Show Only Spawnable:** Turn this on to hide the safe blocks and only see where mobs might spawn.
+Inspired by [Light Level 2025](https://github.com/dark-lion-jp/light-level-2025) by dark-lion-jp. This is a standalone NeoForge implementation - not a port, not affiliated. Bug reports go here, not there.
 
 ## License
 
-This project is licensed under the **MIT License**.
+MIT

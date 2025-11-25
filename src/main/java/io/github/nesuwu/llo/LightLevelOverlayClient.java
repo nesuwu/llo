@@ -4,18 +4,14 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import it.unimi.dsi.fastutil.longs.Long2IntMap;
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -27,12 +23,9 @@ import org.lwjgl.glfw.GLFW;
 public class LightLevelOverlayClient {
 
     public static boolean overlayEnabled = false;
-    private final Long2IntMap lightLevelCache = new Long2IntOpenHashMap();
-    private long lastUpdateTime = 0;
+    private final LightCache lightCache = new LightCache();
 
-    private static int RANGE_HORIZONTAL = 16;
-    private static int RANGE_VERTICAL = 8;
-    private static long UPDATE_INTERVAL_MS = 150;
+    private static final double MAX_RENDER_DIST_SQ = 64.0 * 64.0;
 
     private static final KeyMapping toggleOverlayKey = new KeyMapping(
         "key.lightleveloverlay.toggle",
@@ -62,21 +55,14 @@ public class LightLevelOverlayClient {
 
     @SubscribeEvent
     public void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if (
+            event.getStage() !=
+            RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS
+        ) {
             return;
         }
 
-        while (toggleOverlayKey.consumeClick()) {
-            overlayEnabled = !overlayEnabled;
-            if (!overlayEnabled) {
-                lightLevelCache.clear();
-            }
-        }
-
-        while (openConfigKey.consumeClick()) {
-            Minecraft mc2 = Minecraft.getInstance();
-            mc2.setScreen(ClothConfigScreens.create(mc2.screen));
-        }
+        handleKeyInput();
 
         if (!overlayEnabled) {
             return;
@@ -87,15 +73,7 @@ public class LightLevelOverlayClient {
             return;
         }
 
-        RANGE_HORIZONTAL = ClientConfigFile.getRangeHorizontal();
-        RANGE_VERTICAL = ClientConfigFile.getRangeVertical();
-        UPDATE_INTERVAL_MS = ClientConfigFile.getUpdateIntervalMs();
-
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastUpdateTime > UPDATE_INTERVAL_MS) {
-            lastUpdateTime = currentTime;
-            updateLightLevelCache(mc);
-        }
+        updateCacheIfNeeded(mc);
 
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffer = mc
@@ -103,115 +81,161 @@ public class LightLevelOverlayClient {
             .bufferSource();
         Camera mainCamera = mc.gameRenderer.getMainCamera();
         Vec3 cameraPos = mainCamera.getPosition();
-        Frustum frustum = event.getFrustum();
+
+        renderOverlay(mc, poseStack, buffer, mainCamera, cameraPos);
+
+        buffer.endBatch();
+    }
+
+    private void handleKeyInput() {
+        while (toggleOverlayKey.consumeClick()) {
+            overlayEnabled = !overlayEnabled;
+            if (!overlayEnabled) {
+                lightCache.clear();
+            }
+        }
+
+        while (openConfigKey.consumeClick()) {
+            Minecraft mc = Minecraft.getInstance();
+            mc.setScreen(ClothConfigScreens.create(mc.screen));
+        }
+    }
+
+    private void updateCacheIfNeeded(Minecraft mc) {
+        long currentTime = System.currentTimeMillis();
+        long updateInterval = ClientConfigFile.getUpdateIntervalMs();
+
+        if (lightCache.shouldUpdate(currentTime, updateInterval)) {
+            lightCache.setLastUpdateTimeMs(currentTime);
+
+            LightLogic.scanLightLevels(
+                mc.level,
+                lightCache,
+                mc.player.blockPosition(),
+                ClientConfigFile.getRangeHorizontal(),
+                ClientConfigFile.getRangeVertical(),
+                mc.level.getMinBuildHeight(),
+                mc.level.getMaxBuildHeight()
+            );
+        }
+    }
+
+    private boolean isBlockVisibleFromCamera(
+        Minecraft mc,
+        Vec3 cameraPos,
+        BlockPos pos
+    ) {
+        Vec3 blockCenter = Vec3.atCenterOf(pos).add(0, 0.5, 0);
+        Vec3 blockBottom = Vec3.atBottomCenterOf(pos).add(0, 1.0, 0);
+
+        ClipContext contextCenter = new ClipContext(
+            cameraPos,
+            blockCenter,
+            ClipContext.Block.COLLIDER,
+            ClipContext.Fluid.NONE,
+            mc.player
+        );
+
+        ClipContext contextBottom = new ClipContext(
+            cameraPos,
+            blockBottom,
+            ClipContext.Block.COLLIDER,
+            ClipContext.Fluid.NONE,
+            mc.player
+        );
+
+        BlockHitResult hitCenter = mc.level.clip(contextCenter);
+        BlockHitResult hitBottom = mc.level.clip(contextBottom);
+
+        BlockPos hitCenterPos = hitCenter.getBlockPos();
+        BlockPos hitBottomPos = hitBottom.getBlockPos();
+
+        boolean centerVisible =
+            hitCenterPos.equals(pos) ||
+            hitCenterPos.equals(pos.above()) ||
+            !mc.level.getBlockState(hitCenterPos).canOcclude();
+
+        boolean bottomVisible =
+            hitBottomPos.equals(pos) ||
+            hitBottomPos.equals(pos.above()) ||
+            !mc.level.getBlockState(hitBottomPos).canOcclude();
+
+        return centerVisible || bottomVisible;
+    }
+
+    private void renderOverlay(
+        Minecraft mc,
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        Camera camera,
+        Vec3 cameraPos
+    ) {
+        boolean showOnlySpawnable = ClientConfigFile.isShowOnlySpawnable();
+        int colorZero = ClientConfigFile.getColorZero();
+        int colorLow = ClientConfigFile.getColorLow();
+        int colorSafe = ClientConfigFile.getColorSafe();
 
         poseStack.pushPose();
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        boolean showOnlySpawnable = ClientConfigFile.isShowOnlySpawnable();
-
-        double maxDistSqr = 64.0 * 64.0;
-
-        for (Long2IntMap.Entry entry : lightLevelCache.long2IntEntrySet()) {
+        for (Long2IntMap.Entry entry : lightCache
+            .getCache()
+            .long2IntEntrySet()) {
             long packedPos = entry.getLongKey();
             int lightLevel = entry.getIntValue();
             BlockPos pos = BlockPos.of(packedPos);
 
-            if (pos.distToCenterSqr(cameraPos) > maxDistSqr) {
+            if (
+                !LightLogic.isWithinRenderDistance(
+                    pos.getX(),
+                    pos.getY(),
+                    pos.getZ(),
+                    cameraPos.x,
+                    cameraPos.y,
+                    cameraPos.z,
+                    MAX_RENDER_DIST_SQ
+                )
+            ) {
                 continue;
             }
 
-            if (frustum != null && !frustum.isVisible(new AABB(pos))) {
+            if (!isBlockVisibleFromCamera(mc, cameraPos, pos)) {
                 continue;
             }
 
-            if (showOnlySpawnable && lightLevel >= 8) {
+            if (!LightLogic.shouldDisplay(lightLevel, showOnlySpawnable)) {
                 continue;
             }
 
-            String text = String.valueOf(lightLevel);
-            int color;
-            if (lightLevel == 0) {
-                color = ClientConfigFile.getColorZero();
-            } else if (lightLevel < 8) {
-                color = ClientConfigFile.getColorLow();
-            } else {
-                color = ClientConfigFile.getColorSafe();
-            }
-            drawTextOnBlock(poseStack, buffer, text, pos, color);
+            int color = LightLogic.getLightColor(
+                lightLevel,
+                colorZero,
+                colorLow,
+                colorSafe
+            );
+
+            drawTextOnBlock(
+                poseStack,
+                buffer,
+                camera,
+                String.valueOf(lightLevel),
+                pos,
+                color
+            );
         }
 
         poseStack.popPose();
-        buffer.endBatch();
-    }
-
-    private void updateLightLevelCache(Minecraft mc) {
-        lightLevelCache.clear();
-        if (mc.player == null || mc.level == null) return;
-
-        BlockPos playerPos = mc.player.blockPosition();
-        int minX = playerPos.getX() - RANGE_HORIZONTAL;
-        int maxX = playerPos.getX() + RANGE_HORIZONTAL;
-        int minZ = playerPos.getZ() - RANGE_HORIZONTAL;
-        int maxZ = playerPos.getZ() + RANGE_HORIZONTAL;
-
-        int topY = Math.min(
-            mc.level.getMaxBuildHeight() - 1,
-            playerPos.getY() + RANGE_VERTICAL
-        );
-        int bottomY = Math.max(
-            mc.level.getMinBuildHeight(),
-            playerPos.getY() - RANGE_VERTICAL
-        );
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                for (int y = topY; y >= bottomY; y--) {
-                    BlockPos pos = new BlockPos(x, y, z);
-                    BlockPos posAbove = pos.above();
-
-                    if (
-                        !mc.level.hasChunkAt(pos) ||
-                        !mc.level.hasChunkAt(posAbove)
-                    ) {
-                        continue;
-                    }
-
-                    BlockState bottomState = mc.level.getBlockState(pos);
-                    boolean isSurfaceSolid = bottomState.isFaceSturdy(
-                        mc.level,
-                        pos,
-                        Direction.UP
-                    );
-
-                    if (!isSurfaceSolid) {
-                        continue;
-                    }
-
-                    BlockState upState = mc.level.getBlockState(posAbove);
-                    if (upState.isCollisionShapeFullBlock(mc.level, posAbove)) {
-                        continue;
-                    }
-
-                    int lightLevel = mc.level
-                        .getLightEngine()
-                        .getLayerListener(LightLayer.BLOCK)
-                        .getLightValue(posAbove);
-                    lightLevelCache.put(BlockPos.asLong(x, y, z), lightLevel);
-                }
-            }
-        }
     }
 
     private void drawTextOnBlock(
         PoseStack poseStack,
         MultiBufferSource buffer,
+        Camera camera,
         String text,
         BlockPos pos,
         int color
     ) {
         Minecraft mc = Minecraft.getInstance();
-        Camera camera = mc.gameRenderer.getMainCamera();
 
         poseStack.pushPose();
 
@@ -229,7 +253,6 @@ public class LightLevelOverlayClient {
 
         Matrix4f matrix4f = poseStack.last().pose();
         float textWidth = -mc.font.width(text) / 2.0f;
-
         int finalColor = 0xFF000000 | color;
 
         mc.font.drawInBatch(
