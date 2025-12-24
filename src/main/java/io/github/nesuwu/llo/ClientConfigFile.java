@@ -15,16 +15,14 @@ import org.slf4j.LoggerFactory;
 
 public final class ClientConfigFile {
 
-    private static final String CONFIG_DIR = "config";
     private static final String CONFIG_FILE = "lightleveloverlay-client.json";
 
     private static final Gson GSON = new GsonBuilder()
-        .setPrettyPrinting()
-        .create();
+            .setPrettyPrinting()
+            .create();
     private static volatile boolean loaded = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(
-        ClientConfigFile.class
-    );
+            ClientConfigFile.class);
 
     public static class Data {
 
@@ -37,14 +35,19 @@ public final class ClientConfigFile {
         public boolean showOnlyUnsafe = false;
         public boolean showOnlySpawnable = false;
         public double textScale = 0.025d;
+        public boolean enableUnderwaterMode = false;
+        public String underwaterDisplayMode = "Both";
+        public int colorUnderwater = 0xFF8040;
     }
 
     private static Data data = new Data();
 
-    private ClientConfigFile() {}
+    private ClientConfigFile() {
+    }
 
     public static void ensureLoaded() {
-        if (loaded) return;
+        if (loaded)
+            return;
         load();
     }
 
@@ -80,18 +83,16 @@ public final class ClientConfigFile {
         File file = new File(dir, CONFIG_FILE);
         if (file.exists()) {
             try (
-                BufferedReader reader = new BufferedReader(new FileReader(file))
-            ) {
+                    BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 Data read = GSON.fromJson(reader, Data.class);
                 if (read != null) {
                     data = read;
                 }
             } catch (IOException | JsonSyntaxException ex) {
                 LOGGER.warn(
-                    "Failed to read config file {}, falling back to defaults: {}",
-                    file.getAbsolutePath(),
-                    ex.toString()
-                );
+                        "Failed to read config file {}, falling back to defaults: {}",
+                        file.getAbsolutePath(),
+                        ex.toString());
                 data = new Data();
             }
         } else {
@@ -101,9 +102,8 @@ public final class ClientConfigFile {
             data.showOnlySpawnable = true;
             data.showOnlyUnsafe = false;
             LOGGER.info(
-                "Migrated legacy showOnlyUnsafe=true to showOnlySpawnable=true in {}",
-                new File(dir, CONFIG_FILE).getAbsolutePath()
-            );
+                    "Migrated legacy showOnlyUnsafe=true to showOnlySpawnable=true in {}",
+                    new File(dir, CONFIG_FILE).getAbsolutePath());
             save();
         }
         loaded = true;
@@ -119,10 +119,9 @@ public final class ClientConfigFile {
             writer.write(GSON.toJson(data));
         } catch (IOException ex) {
             LOGGER.error(
-                "Failed to write config file {}: {}",
-                file.getAbsolutePath(),
-                ex.toString()
-            );
+                    "Failed to write config file {}: {}",
+                    file.getAbsolutePath(),
+                    ex.toString());
         }
     }
 
@@ -177,9 +176,8 @@ public final class ClientConfigFile {
         ensureLoaded();
         data.colorZero = clampRgb(v);
         LOGGER.info(
-            "Config updated: colorZero=#{}",
-            String.format("%06X", data.colorZero)
-        );
+                "Config updated: colorZero=#{}",
+                String.format("%06X", data.colorZero));
         save();
     }
 
@@ -187,9 +185,8 @@ public final class ClientConfigFile {
         ensureLoaded();
         data.colorLow = clampRgb(v);
         LOGGER.info(
-            "Config updated: colorLow=#{}",
-            String.format("%06X", data.colorLow)
-        );
+                "Config updated: colorLow=#{}",
+                String.format("%06X", data.colorLow));
         save();
     }
 
@@ -197,9 +194,8 @@ public final class ClientConfigFile {
         ensureLoaded();
         data.colorSafe = clampRgb(v);
         LOGGER.info(
-            "Config updated: colorSafe=#{}",
-            String.format("%06X", data.colorSafe)
-        );
+                "Config updated: colorSafe=#{}",
+                String.format("%06X", data.colorSafe));
         save();
     }
 
@@ -208,16 +204,61 @@ public final class ClientConfigFile {
         data.showOnlySpawnable = v;
         data.showOnlyUnsafe = v;
         LOGGER.info(
-            "Config updated: showOnlySpawnable={} (legacy showOnlyUnsafe={})",
-            v,
-            v
-        );
+                "Config updated: showOnlySpawnable={} (legacy showOnlyUnsafe={})",
+                v,
+                v);
         save();
     }
 
     public static void setTextScale(double v) {
         ensureLoaded();
         data.textScale = Math.max(0.015d, Math.min(0.06d, v));
+        save();
+    }
+
+    public static boolean isUnderwaterModeEnabled() {
+        ensureLoaded();
+        return data.enableUnderwaterMode;
+    }
+
+    public static void setUnderwaterModeEnabled(boolean v) {
+        ensureLoaded();
+        data.enableUnderwaterMode = v;
+        LOGGER.info("Config updated: enableUnderwaterMode={}", v);
+        save();
+    }
+
+    public static String getUnderwaterDisplayMode() {
+        ensureLoaded();
+        String mode = data.underwaterDisplayMode;
+        if (!"Floor".equals(mode) && !"Surface".equals(mode) && !"Both".equals(mode)) {
+            return "Both";
+        }
+        return mode;
+    }
+
+    public static void setUnderwaterDisplayMode(String v) {
+        ensureLoaded();
+        if ("Floor".equals(v) || "Surface".equals(v) || "Both".equals(v)) {
+            data.underwaterDisplayMode = v;
+        } else {
+            data.underwaterDisplayMode = "Both";
+        }
+        LOGGER.info("Config updated: underwaterDisplayMode={}", data.underwaterDisplayMode);
+        save();
+    }
+
+    public static int getColorUnderwater() {
+        ensureLoaded();
+        return clampRgb(data.colorUnderwater);
+    }
+
+    public static void setColorUnderwater(int v) {
+        ensureLoaded();
+        data.colorUnderwater = clampRgb(v);
+        LOGGER.info(
+                "Config updated: colorUnderwater=#{}",
+                String.format("%06X", data.colorUnderwater));
         save();
     }
 }
