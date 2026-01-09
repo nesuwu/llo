@@ -1,0 +1,27 @@
+{
+    "schemaVersion": 1,
+    "id": "lightleveloverlay",
+    "version": "${version}",
+    "name": "LightLevelOverlay",
+    "description": "Does what it says in the name. Don't expect anything else.",
+    "authors": [
+        "Nesu"
+    ],
+    "contact": {},
+    "license": "MIT",
+    "icon": "assets/lightleveloverlay/icon.png",
+    "environment": "client",
+    "entrypoints": {
+        "client": [
+            "io.github.nesuwu.llo.fabric.LightLevelOverlayFabric"
+        ]
+    },
+    "mixins": [],
+    "depends": {
+        "fabricloader": ">=0.16.0",
+        "minecraft": "~1.21.1",
+        "java": ">=21",
+        "fabric-api": "*",
+        "cloth-config": "*"
+    }
+}

@@ -1,0 +1,76 @@
+plugins {
+    id 'architectury-plugin'
+    id 'dev.architectury.loom'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+loom {
+    silentMojangMappingsLicense()
+}
+
+configurations {
+    common
+    shadowCommon
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment "org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip"
+    }
+
+    neoForge "net.neoforged:neoforge:${rootProject.neo_version}"
+    modImplementation "dev.architectury:architectury-neoforge:${rootProject.architectury_version}"
+    modImplementation "me.shedaniel.cloth:cloth-config-neoforge:${rootProject.cloth_config_version}"
+
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+}
+
+processResources {
+    inputs.property 'version', rootProject.mod_version
+    inputs.property 'minecraft_version', rootProject.minecraft_version
+    inputs.property 'neo_version', rootProject.neo_version
+    inputs.property 'mod_id', rootProject.mod_id
+    inputs.property 'mod_name', rootProject.mod_name
+    inputs.property 'mod_license', rootProject.mod_license
+    inputs.property 'mod_authors', rootProject.mod_authors
+    inputs.property 'mod_description', rootProject.mod_description
+
+    filesMatching('META-INF/neoforge.mods.toml') {
+        expand(
+            'version': rootProject.mod_version,
+            'minecraft_version': rootProject.minecraft_version,
+            'neo_version': rootProject.neo_version,
+            'mod_id': rootProject.mod_id,
+            'mod_name': rootProject.mod_name,
+            'mod_license': rootProject.mod_license,
+            'mod_authors': rootProject.mod_authors,
+            'mod_description': rootProject.mod_description
+        )
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
+}
+
+jar {
+    archiveClassifier = 'dev'
+}

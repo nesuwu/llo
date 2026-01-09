@@ -1,0 +1,25 @@
+plugins {
+    id 'architectury-plugin'
+    id 'dev.architectury.loom'
+}
+
+architectury {
+    common 'fabric', 'neoforge'
+}
+
+loom {
+    silentMojangMappingsLicense()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment "org.parchmentmc.data:parchment-${rootProject.parchment_minecraft_version}:${rootProject.parchment_mappings_version}@zip"
+    }
+
+    modImplementation "dev.architectury:architectury:${rootProject.architectury_version}"
+    modImplementation "me.shedaniel.cloth:cloth-config:${rootProject.cloth_config_version}"
+
+    implementation 'it.unimi.dsi:fastutil:8.5.12'
+}
