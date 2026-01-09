@@ -3,3 +3,6 @@
 # are changed when only line endings change.
 src/generated/**/.cache/cache text eol=lf
 src/generated/**/*.json text eol=lf
+
+# Gradle Wrapper - MUST be LF or it will fail on Linux/Mac
+gradlew text eol=lf
