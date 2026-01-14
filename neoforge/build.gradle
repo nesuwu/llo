@@ -9,6 +9,9 @@ architectury {
     neoForge()
 }
 
+archivesBaseName = "${rootProject.mod_id}-neoforge"
+version = "${rootProject.mod_version}+mc${rootProject.minecraft_version}"
+
 loom {
     silentMojangMappingsLicense()
 }

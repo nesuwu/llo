@@ -13,6 +13,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -84,14 +85,15 @@ public class LightLevelOverlayClient {
             return;
 
         lightCache.setLastUpdateTimeMs(currentTime);
+        LevelHeightAccessor heightAccessor = (LevelHeightAccessor) mc.level;
         LightLogic.scanLightLevels(mc.level, lightCache, mc.player.blockPosition(),
                 ClientConfig.getRangeHorizontal(), ClientConfig.getRangeVertical(),
-                mc.level.getMinBuildHeight(), mc.level.getMaxBuildHeight());
+                heightAccessor.getMinY(), heightAccessor.getMaxY());
 
         if (ClientConfig.isUnderwaterModeEnabled()) {
             LightLogic.scanWaterLightLevels(mc.level, lightCache, mc.player.blockPosition(),
                     ClientConfig.getRangeHorizontal(), ClientConfig.getRangeVertical(),
-                    mc.level.getMinBuildHeight(), mc.level.getMaxBuildHeight(),
+                    heightAccessor.getMinY(), heightAccessor.getMaxY(),
                     ClientConfig.getUnderwaterDisplayMode(), mc.player.isUnderWater());
         }
     }

@@ -14,14 +14,20 @@
     "entrypoints": {
         "client": [
             "io.github.nesuwu.llo.fabric.LightLevelOverlayFabric"
+        ],
+        "modmenu": [
+            "io.github.nesuwu.llo.fabric.ModMenuIntegration"
         ]
     },
     "mixins": [],
     "depends": {
         "fabricloader": ">=0.16.0",
-        "minecraft": "~1.21.1",
+        "minecraft": "1.21.3",
         "java": ">=21",
         "fabric-api": "*",
         "cloth-config": "*"
+    },
+    "suggests": {
+        "modmenu": "*"
     }
 }
